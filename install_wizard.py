@@ -429,12 +429,12 @@ Ready to launch Daemon Watcher!"""
     def launch_daemon(self):
         """Launch the daemon process"""
         try:
-            daemon_script = USB_MOUNT / "motion_daemon_core_v2.py"
+            daemon_script = USB_MOUNT / "motion_daemon_core.py"
             if daemon_script.exists():
                 subprocess.Popen([sys.executable, str(daemon_script)])
                 self.root.after(2000, self.root.quit)
             else:
-                messagebox.showerror("Error", "motion_daemon_core_v2.py not found")
+                messagebox.showerror("Error", "motion_daemon_core.py not found")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to launch daemon: {e}")
     

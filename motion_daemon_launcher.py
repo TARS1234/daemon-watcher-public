@@ -52,7 +52,6 @@ class USBDetector:
     def _find_core_script(self, mount_path: Path) -> Optional[Path]:
         """Find the best available core script on the USB"""
         candidates = [
-            mount_path / "motion_daemon_core_v2.py",
             mount_path / "motion_daemon_core.py",
         ]
 
@@ -108,7 +107,7 @@ class USBDetector:
         if core_script is None:
             self.logger.error(
                 f"Core script not found on USB. Checked: "
-                f"{mount_path / 'motion_daemon_core_v2.py'}, {mount_path / 'motion_daemon_core.py'}"
+                f"{mount_path / 'motion_daemon_core.py'}"
             )
             return
 
