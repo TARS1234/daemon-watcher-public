@@ -1,0 +1,44 @@
+# Logs
+logs/
+*.log
+
+# Machine-specific node data (configs, heartbeat ids, state)
+.daemon_watcher_nodes/
+
+# Local user config
+.daemon_watcher/
+
+# Machine registry and state
+machines.json
+.daemon_state.json
+.machine_fingerprints
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.spec
+
+# macOS
+.DS_Store
+
+# Secrets / credentials (never commit)
+daemon_config.yaml
+*.key
+*.pem
+
+# Backup files
+*_backup.py
+
+# Internal dev notes
+FINAL_PRODUCTION_BUILD.md
+.claudecoderules
+
+# Generated files
+README.html

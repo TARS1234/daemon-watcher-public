@@ -1,0 +1,9 @@
+pyyaml>=5.3
+requests>=2.25.0
+opencv-python>=4.5.0
+pillow>=8.0.0
+moviepy>=1.0.0
+ffmpeg-python>=0.2.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+
