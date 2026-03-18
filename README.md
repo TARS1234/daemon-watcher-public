@@ -47,6 +47,7 @@ Everything runs through your bot. No interface to open, no config file to edit.
 | `/edit 1 20` | Change video clip length to 20s on all nodes |
 | `/edit OFFICE 4 0.3` | Set motion sensitivity on OFFICE only |
 | `/logs` | View recent activity |
+| `/passcode <code>` | Unlock session after timeout |
 | `/kill` | Shut down the daemon |
 | `/help` | Show all commands |
 
@@ -78,9 +79,28 @@ Target any machine by name — put the machine name anywhere in the command:
 
 ---
 
+## SECURITY
+
+Set a passcode with `/edit 11 yourcode`. Once set, every command requires an active session. After 30 minutes of inactivity the session expires and the next command will prompt for the passcode.
+
+```
+/edit 11 mycode       → passcode set
+/snap                 → works (session active)
+
+... 30 min idle ...
+
+/snap                 → "Session locked. Send: /passcode <code>"
+/passcode mycode      → "Unlocked. Session active for 30 minutes of inactivity."
+/snap                 → works again
+```
+
+5 wrong attempts triggers an automatic shutdown. `/help` is always available without a passcode.
+
+---
+
 ## MULTI-NODE
 
-Add Daemon Watcher to a second machine using the same bot token and chat ID. They discover each other on the same network automatically — no config, no pairing, nothing to set up. Both machines appear in `/nodes` within seconds.
+Add Daemon Watcher to a second machine using the same bot token and chat ID. They discover each other on the same network automatically — no config, no pairing, nothing to set up.
 
 ```
 /snap               → snapshots from both
@@ -94,12 +114,7 @@ Add Daemon Watcher to a second machine using the same bot token and chat ID. The
 
 ## CAMERA DETECTION
 
-On startup, Daemon Watcher scans all available cameras and picks the best one automatically — it runs a brightness and variance test to skip idle or dark cameras. If you want to lock in a specific camera:
-
-```
-/edit 15 1      → pin camera index 1
-/edit 15 -1     → back to auto
-```
+On startup, Daemon Watcher scans all available cameras and picks the best one automatically — it runs a brightness and variance test to skip idle or dark cameras.
 
 ---
 
@@ -141,7 +156,6 @@ curl https://your-server-domain.com/health
 
 **Node shows offline:**
 - Confirm both nodes use the same bot token and chat ID
-- Check heartbeat interval: `/edit 16 15`
 - For cross-network nodes, configure a relay (see above)
 
 **Telegram not connecting:**
