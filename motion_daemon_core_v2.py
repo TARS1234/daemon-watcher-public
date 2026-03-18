@@ -552,10 +552,6 @@ CONFIG_MAP = {
     "9": ("motion.snapshot", "bool", "true/false"),
     "10": ("daemon.check_interval", "int", "1-60"),
     "11": ("security.passcode", "string", "6-16 alphanumeric"),
-    "12": ("machine.custom_name", "string", "any name"),
-    "13": ("security.edit_machine", "string", "machine to edit (current uses this machine)"),
-    "15": ("camera.index", "int", "-1=auto, 0/1/2=pin specific camera index"),
-    "16": ("daemon.heartbeat_interval", "int", "5-60"),
 }
 
 # Numeric (int/float) range enforcement — values outside range are rejected with an error.
@@ -565,7 +561,6 @@ CONFIG_RANGES = {
     "5":  (50, 100),
     "7":  (30, 300),
     "10": (1, 60),
-    "16": (5, 60),
 }
 
 
@@ -859,7 +854,7 @@ class HeartbeatManager:
             plat_part = lines[1].split("·", 1)
             plat = plat_part[1].strip() if len(plat_part) > 1 else ""
 
-            # Line 2: "📍 Fabians-MacBook-Pro-2.local"
+            # Line 2: "📍 my-machine.local"
             host = lines[2].lstrip("📍").strip()
 
             # Derive machine_id the same way _get_machine_id() does

@@ -43,7 +43,6 @@ Everything runs through your bot. No interface to open, no config file to edit.
 | `/snap` | Sends a snapshot from every camera right now |
 | `/watch` | Records and sends a video clip right now |
 | `/status` | Every node reports its live status |
-| `/nodes` | See all your machines and which are online |
 | `/edit` | View current settings on every node |
 | `/edit 1 20` | Change video clip length to 20s on all nodes |
 | `/edit OFFICE 4 0.3` | Set motion sensitivity on OFFICE only |
@@ -56,7 +55,7 @@ Target any machine by name — put the machine name anywhere in the command:
 ```
 /snap OFFICE            → snapshot from OFFICE only
 /edit OFFICE 6 high     → set video quality to high on OFFICE
-/status KITCHEN         → get live status from KITCHEN
+/status OFFICE          → get live status from OFFICE
 ```
 
 ---
@@ -76,10 +75,6 @@ Target any machine by name — put the machine name anywhere in the command:
 | 9 | Send snapshot on motion | `true` / `false` |
 | 10 | Check interval | 1–60 seconds |
 | 11 | Passcode | 6–16 alphanumeric |
-| 12 | Machine name | any name |
-| 13 | Default target machine | machine name |
-| 15 | Camera index | `-1` auto, `0` / `1` / `2` pin specific |
-| 16 | Heartbeat interval | 5–60 seconds |
 
 ---
 
@@ -88,10 +83,6 @@ Target any machine by name — put the machine name anywhere in the command:
 Add Daemon Watcher to a second machine using the same bot token and chat ID. They discover each other on the same network automatically — no config, no pairing, nothing to set up. Both machines appear in `/nodes` within seconds.
 
 ```
-/nodes
-→ OFFICE   🟢 Online
-→ KITCHEN  🟢 Online
-
 /snap               → snapshots from both
 /snap KITCHEN       → snapshot from KITCHEN only
 /watch OFFICE       → video from OFFICE only
