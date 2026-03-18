@@ -12,7 +12,7 @@ Run it on your laptop, a spare Mac, a Raspberry Pi — anything with a camera. G
 - Runs on any machine — Mac, Linux, Windows, Raspberry Pi
 - Control everything from Telegram — no app, no dashboard, no login
 - Multi-node: run on 5 machines, they sync and stay aware of each other
-- No cloud dependency — your data goes from your camera to your Telegram, nowhere else
+- No mandatory cloud — your data goes from your camera to your Telegram, nowhere else
 - One-time setup, runs forever
 
 ---
@@ -63,22 +63,22 @@ Target any machine by name — put the machine name anywhere in the command:
 
 ## SETTINGS
 
-| # | Setting | Range |
-|---|---------|-------|
+| # | Setting | Values |
+|--:|---------|--------|
 | 1 | Video clip length | 5–30 seconds |
-| 2 | Record video on motion | true / false |
-| 3 | Alert hours only | true / false |
+| 2 | Record video on motion | `true` / `false` |
+| 3 | Alert hours only | `true` / `false` |
 | 4 | Motion sensitivity | 0.0–1.0 |
 | 5 | Snapshot quality | 50–100 |
-| 6 | Video quality | low / medium / high |
+| 6 | Video quality | `low` / `medium` / `high` |
 | 7 | Cooldown between alerts | 30–300 seconds |
 | 8 | Alert text | any text |
-| 9 | Send snapshot on motion | true / false |
+| 9 | Send snapshot on motion | `true` / `false` |
 | 10 | Check interval | 1–60 seconds |
 | 11 | Passcode | 6–16 alphanumeric |
 | 12 | Machine name | any name |
-| 13 | Edit machine target | machine name |
-| 15 | Camera index | -1=auto, 0/1/2=pin specific |
+| 13 | Default target machine | machine name |
+| 15 | Camera index | `-1` auto, `0` / `1` / `2` pin specific |
 | 16 | Heartbeat interval | 5–60 seconds |
 
 ---
@@ -169,4 +169,4 @@ Video and audio surveillance laws vary by location. You are responsible for ensu
 
 ---
 
-**Any machine. Any camera. Total control from your phone.**
+**Any machine. Any camera. Total control from your phone. No mandatory cloud.**
