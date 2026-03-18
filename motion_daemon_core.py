@@ -540,6 +540,8 @@ class TelegramNotifier:
         return False
 
 
+SESSION_TIMEOUT = 30 * 60  # seconds of inactivity before re-auth required
+
 CONFIG_MAP = {
     "1": ("motion.video_duration", "int", "5-30"),
     "2": ("motion.video_on_motion", "bool", "true/false"),
@@ -1340,11 +1342,22 @@ class TelegramCommandListener:
             return
         cmd = text.split()[0].lower()
         handler_name = self._HANDLERS.get(cmd)
-        if handler_name:
-            self.logger.debug(f"[Command] route → {handler_name}  text={text[:60]}")
-            getattr(self, handler_name)(text)
-        else:
+        if not handler_name:
             self.logger.debug(f"[Command] unknown command: {cmd}")
+            return
+
+        # Passcode gate — /passcode and /help always allowed
+        if cmd not in ('/passcode', '/help'):
+            if not self.daemon._is_authenticated():
+                self.send_message(
+                    f"{CROW_EMOJI} Session locked.\n\nSend: /passcode <code>"
+                )
+                return
+            # Reset inactivity timer on every authenticated command
+            self.daemon.last_auth_time = time.time()
+
+        self.logger.debug(f"[Command] route → {handler_name}  text={text[:60]}")
+        getattr(self, handler_name)(text)
 
     def handle_test(self, text: str) -> None:
         self.send_message(f"{CROW_EMOJI} [{self.daemon.get_machine_name()}] Test alert — online")
@@ -1374,6 +1387,7 @@ class TelegramCommandListener:
             f"/test - Test alert\n"
             f"/logs - Show logs\n"
             f"/kill - Self-destruct\n"
+            f"/passcode <code> - Unlock session\n"
             f"/help - This"
         )
         self.send_message(msg)
@@ -1393,13 +1407,17 @@ class TelegramCommandListener:
             return
 
         if self.daemon.passcode_manager.validate_passcode(attempt, stored_encrypted):
-            self.send_message(f"{CROW_EMOJI} Passcode correct! Daemon unlocked.")
-            self.daemon.passcode_authenticated = True
+            self.daemon.last_auth_time = time.time()
+            self.daemon.passcode_attempts = 0
+            timeout_min = SESSION_TIMEOUT // 60
+            self.send_message(f"{CROW_EMOJI} Unlocked. Session active for {timeout_min} minutes of inactivity.")
         else:
-            self.send_message(f"{CROW_EMOJI} Incorrect passcode. Try again.")
             self.daemon.passcode_attempts += 1
-            if self.daemon.passcode_attempts >= 5:
-                self.send_message(f"{CROW_EMOJI} Too many attempts. Daemon will shutdown in 30 seconds.")
+            remaining = 5 - self.daemon.passcode_attempts
+            if remaining > 0:
+                self.send_message(f"{CROW_EMOJI} Incorrect passcode. {remaining} attempt(s) remaining.")
+            else:
+                self.send_message(f"{CROW_EMOJI} Too many attempts. Daemon shutting down in 30 seconds.")
                 self.daemon.shutdown_timer = 30
 
     def _validate_range(self, idx: str, value) -> Optional[str]:
@@ -1448,10 +1466,19 @@ class TelegramCommandListener:
                 old = self.safe_config.get(config_key)
                 if config_key == 'machine.custom_name':
                     self.daemon.set_machine_name(value)
+                elif config_key == 'security.passcode':
+                    encrypted = self.daemon.passcode_manager.encrypt_passcode(str(value))
+                    if not encrypted:
+                        self.send_message(f"{CROW_EMOJI} Failed to set passcode.")
+                        return
+                    self.safe_config.set(config_key, encrypted)
+                    self.daemon.last_auth_time = time.time()  # new passcode = fresh session
                 else:
                     self.safe_config.set(config_key, value)
                 self.daemon.update_registry()
-                self.send_message(f"{CROW_EMOJI} {self.daemon.get_machine_name()} {config_key}: {old} → {value}")
+                display = "****" if config_key == 'security.passcode' else value
+                old_display = "****" if config_key == 'security.passcode' and old else old
+                self.send_message(f"{CROW_EMOJI} {self.daemon.get_machine_name()} {config_key}: {old_display} → {display}")
             except Exception as e:
                 self.send_message(f"Error: {e}")
             return
@@ -1483,10 +1510,19 @@ class TelegramCommandListener:
                 old = self.safe_config.get(config_key)
                 if config_key == 'machine.custom_name':
                     self.daemon.set_machine_name(value)
+                elif config_key == 'security.passcode':
+                    encrypted = self.daemon.passcode_manager.encrypt_passcode(str(value))
+                    if not encrypted:
+                        self.send_message(f"{CROW_EMOJI} Failed to set passcode.")
+                        return
+                    self.safe_config.set(config_key, encrypted)
+                    self.daemon.last_auth_time = time.time()
                 else:
                     self.safe_config.set(config_key, value)
                 self.daemon.update_registry()
-                self.send_message(f"{CROW_EMOJI} {self.daemon.get_machine_name()} {config_key}: {old} → {value}")
+                display = "****" if config_key == 'security.passcode' else value
+                old_display = "****" if config_key == 'security.passcode' and old else old
+                self.send_message(f"{CROW_EMOJI} {self.daemon.get_machine_name()} {config_key}: {old_display} → {display}")
             except Exception as e:
                 self.send_message(f"Error: {e}")
 
@@ -1615,7 +1651,7 @@ class MotionDaemon:
         self.version_checker = VersionChecker(self.logger)
         self.passcode_manager = PasscodeManager(self.logger)
         self.logo_base64 = load_logo_base64(self.usb_mount)
-        self.passcode_authenticated = False
+        self.last_auth_time = 0.0   # epoch of last successful passcode auth
         self.passcode_attempts = 0
         self.shutdown_timer = 0
         self.manual_watch_lock = threading.Lock()
@@ -1631,6 +1667,12 @@ class MotionDaemon:
 
     def _get_machine_id(self) -> str:
         return socket.gethostname().replace('.', '_').replace(' ', '_')
+
+    def _is_authenticated(self) -> bool:
+        """True if a valid passcode session is active (within SESSION_TIMEOUT of last auth)."""
+        if not self.safe_config.get('security.passcode', ''):
+            return True  # no passcode set — always open
+        return (time.time() - self.last_auth_time) < SESSION_TIMEOUT
 
     def get_machine_name(self) -> str:
         """Read custom name from state.json (identity store), fall back to config, then hostname."""
@@ -1756,7 +1798,7 @@ class MotionDaemon:
         stored_encrypted = self.safe_config.get('security.passcode', '')
 
         if not stored_encrypted:
-            self.passcode_authenticated = True
+            self.last_auth_time = time.time()
             return True
 
         self.logger.info("Waiting for passcode validation...")
@@ -1770,7 +1812,7 @@ class MotionDaemon:
 
         timeout = time.time() + 300
         while time.time() < timeout:
-            if self.passcode_authenticated:
+            if self._is_authenticated():
                 self.logger.info("✓ Passcode validated")
                 return True
 
